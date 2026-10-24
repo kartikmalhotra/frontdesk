@@ -19,6 +19,7 @@ from .config import Business, DAY_KEYS
 from .db import Store
 
 MAX_TOOL_ROUNDS = 6
+MAX_HISTORY = 40          # messages sent to the model per turn; older ones stay in the database
 
 TOOLS: list[dict[str, Any]] = [
     {
@@ -185,6 +186,26 @@ class Receptionist:
         self.business, self.calendar, self.store, self.client, self.model = business, calendar, store, client, model
         self.now = now or (lambda: datetime.now(business.tz))
 
+    @staticmethod
+    def _plain(block) -> dict:
+        """Keep only the fields the API expects back, whatever extras the SDK's objects carry."""
+        b = block.model_dump() if hasattr(block, "model_dump") else dict(block)
+        if b.get("type") == "tool_use":
+            return {"type": "tool_use", "id": b["id"], "name": b["name"], "input": b.get("input") or {}}
+        return {"type": "text", "text": b.get("text", "")}
+
+    @staticmethod
+    def _trim(messages: list[dict], keep: int = MAX_HISTORY) -> list[dict]:
+        """Bound the context sent to the model. Cuts only at a plain user message, so a tool call
+        is never separated from its result."""
+        if len(messages) <= keep:
+            return messages
+        start = len(messages) - keep
+        while start < len(messages) and not (messages[start]["role"] == "user"
+                                             and isinstance(messages[start]["content"], str)):
+            start += 1
+        return messages[start:] if start < len(messages) else messages[-1:]
+
     def reply(self, conversation_id: str, user_text: str) -> str:
         messages = self.store.get_messages(conversation_id)
         if messages is None:
@@ -196,8 +217,8 @@ class Receptionist:
         final_text = ""
         for _ in range(MAX_TOOL_ROUNDS + 1):
             response = self.client.messages.create(
-                model=self.model, max_tokens=600, system=system, tools=TOOLS, messages=messages)
-            content = [b.model_dump() if hasattr(b, "model_dump") else b for b in response.content]
+                model=self.model, max_tokens=600, system=system, tools=TOOLS, messages=self._trim(messages))
+            content = [self._plain(b) for b in response.content]
             messages.append({"role": "assistant", "content": content})
             tool_uses = [b for b in content if b.get("type") == "tool_use"]
             final_text = " ".join(b.get("text", "") for b in content if b.get("type") == "text").strip()

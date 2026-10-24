@@ -5,7 +5,7 @@ import uvicorn
 
 def main() -> None:
     port = int(os.environ.get("PORT", "8000"))
-    uvicorn.run("frontdesk.app:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("frontdesk.app:create_app", factory=True, host="0.0.0.0", port=port, reload=False)
 
 
 if __name__ == "__main__":

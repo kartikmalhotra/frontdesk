@@ -57,3 +57,31 @@ def test_admin_requires_password(business, calendar, store):
     auth = base64.b64encode(b"owner:secret").decode()
     r = c.get("/admin", headers={"Authorization": f"Basic {auth}"})
     assert r.status_code == 200 and "Bookings" in r.text
+
+
+def test_admin_escapes_visitor_text(business, calendar, store):
+    cid = store.new_conversation()
+    store.save_lead(cid, "<script>alert(1)</script>", "+91 90000 00000", "Cleaning", notes="x")
+    c = make_client(business, calendar, store, [])
+    auth = base64.b64encode(b"owner:secret").decode()
+    r = c.get("/admin", headers={"Authorization": f"Basic {auth}"})
+    assert "<script>alert(1)" not in r.text and "&lt;script&gt;" in r.text
+
+
+def test_widget_can_be_embedded_cross_origin(business, calendar, store):
+    c = make_client(business, calendar, store, [])
+    r = c.get("/api/config", headers={"Origin": "https://clinic.example"})
+    assert r.headers.get("access-control-allow-origin") == "*"
+
+
+def test_chat_is_rate_limited(business, calendar, store):
+    settings = Settings()
+    settings.rate_limit_per_10min = 2
+    script = [[text("one")], [text("two")], [text("three")]]
+    app = create_app(business=business, calendar=calendar, store=store,
+                     client=ScriptedClient(ScriptedMessages(script)), settings=settings)
+    c = TestClient(app)
+    assert c.post("/api/chat", json={"message": "a"}).status_code == 200
+    assert c.post("/api/chat", json={"message": "b"}).status_code == 200
+    r = c.post("/api/chat", json={"message": "c"})
+    assert r.status_code == 429 and business.phone in r.json()["reply"]

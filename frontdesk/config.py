@@ -129,3 +129,8 @@ class Settings:
         default_factory=lambda: os.environ.get("GOOGLE_SERVICE_ACCOUNT_FILE", "service-account.json"))
     database_path: str = field(default_factory=lambda: os.environ.get("DATABASE_PATH", "frontdesk.db"))
     admin_password: str = field(default_factory=lambda: os.environ.get("ADMIN_PASSWORD", "change-me"))
+    # Sites allowed to embed the widget, comma-separated. "*" while piloting; the clinic's domain in production.
+    allowed_origins: list[str] = field(
+        default_factory=lambda: [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",") if o.strip()])
+    # Messages one visitor (IP) may send in a 10-minute window. Keeps a prank from running up the model bill.
+    rate_limit_per_10min: int = field(default_factory=lambda: int(os.environ.get("RATE_LIMIT_PER_10MIN", "30")))

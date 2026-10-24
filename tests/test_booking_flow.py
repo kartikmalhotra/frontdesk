@@ -103,6 +103,28 @@ def test_full_conversation_through_the_agent_loop(business, calendar, store):
     assert any(isinstance(m["content"], list) and any(b.get("type") == "tool_use" for b in m["content"]) for m in saved)
 
 
+def test_history_is_trimmed_without_splitting_tool_calls():
+    msgs = []
+    for i in range(30):                      # 30 turns of user → assistant(tool) → user(result) → assistant(text)
+        msgs += [{"role": "user", "content": f"q{i}"},
+                 {"role": "assistant", "content": [tool("get_available_slots", f"t{i}", date="2026-10-23")]},
+                 {"role": "user", "content": [{"type": "tool_result", "tool_use_id": f"t{i}", "content": "{}"}]},
+                 {"role": "assistant", "content": [text("ok")]}]
+    trimmed = Receptionist._trim(msgs, keep=10)
+    assert len(trimmed) <= 10 and trimmed[0]["role"] == "user" and isinstance(trimmed[0]["content"], str)
+    assert trimmed[-1] is msgs[-1]
+    assert Receptionist._trim(msgs[:3], keep=10) == msgs[:3]
+
+
+def test_model_blocks_are_reduced_to_api_fields():
+    class Block:
+        def model_dump(self):
+            return {"type": "text", "text": "hi", "citations": None}
+    assert Receptionist._plain(Block()) == {"type": "text", "text": "hi"}
+    assert Receptionist._plain({"type": "tool_use", "id": "t1", "name": "save_lead", "input": {"name": "A"}, "extra": 1}) == \
+        {"type": "tool_use", "id": "t1", "name": "save_lead", "input": {"name": "A"}}
+
+
 def test_tool_loop_is_bounded(business, calendar, store):
     tomorrow = (NOW + timedelta(days=1)).date().isoformat()
     script = [[tool("get_available_slots", f"t{i}", date=tomorrow)] for i in range(10)]

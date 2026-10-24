@@ -13,7 +13,7 @@
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;text-decoration:none;color:var(--ink)}
   .brand i{width:34px;height:34px;border-radius:9px;background:var(--green);display:inline-block}
   nav a{color:var(--muted);text-decoration:none;margin-left:22px;font-size:15px}
-  nav .call{background:var(--green);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600}
+  nav .call{background:var(--green);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;white-space:nowrap}
   .hero{display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center;padding:64px 6vw;background:var(--bg)}
   .hero h1{font-size:44px;line-height:1.1;margin:0 0 16px;letter-spacing:-.01em}
   .hero p{font-size:18px;color:var(--muted);margin:0 0 24px;max-width:34em}
@@ -22,7 +22,13 @@
   .pic{aspect-ratio:4/3;border-radius:20px;background:
        radial-gradient(circle at 30% 30%,#d7efe6,transparent 55%),
        radial-gradient(circle at 75% 70%,#bfe3d4,transparent 50%),#e9f4ef;position:relative;overflow:hidden}
-  .pic:after{content:"";position:absolute;inset:auto 10% 10% 10%;height:38%;background:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(15,110,86,.12)}
+  .slotcard{position:absolute;left:10%;right:10%;bottom:10%;background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 20px 40px rgba(15,110,86,.12)}
+  .slotcard small{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .slotcard b{display:block;font-size:20px;margin-bottom:2px}.slotcard span{color:var(--muted);font-size:14px}
+  .slotcard .chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .slotcard .chips i{font-style:normal;font-size:13px;font-weight:600;color:var(--green);background:#e9f4ef;border-radius:999px;padding:6px 12px}
+  .slotcard .chips i.on{background:var(--green);color:#fff}
+  .num{display:inline}
   .strip{display:flex;gap:32px;flex-wrap:wrap;padding:20px 6vw;border-bottom:1px solid var(--line);color:var(--muted);font-size:14px}
   section{padding:56px 6vw}
   h2{font-size:28px;margin:0 0 20px}
@@ -34,12 +40,13 @@
   table{border-collapse:collapse;width:100%}td{padding:8px 0;border-bottom:1px solid var(--line)}td:last-child{text-align:right;color:var(--muted)}
   footer{padding:32px 6vw;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
   @media(max-width:860px){.hero{grid-template-columns:1fr;padding:40px 6vw}.hero h1{font-size:34px}.grid{grid-template-columns:1fr 1fr}.hours{grid-template-columns:1fr}nav a:not(.call){display:none}}
+  @media(max-width:560px){.brand{font-size:17px}.num{display:none}.grid{grid-template-columns:1fr}.btn.ghost{margin:10px 0 0}}
 </style>
 </head>
 <body>
 <header>
   <a class="brand" href="#"><i></i>{{BUSINESS_NAME}}</a>
-  <nav><a href="#services">Services</a><a href="#hours">Hours</a><a href="#contact">Contact</a><a class="call" href="tel:{{PHONE}}">Call {{PHONE}}</a></nav>
+  <nav><a href="#services">Services</a><a href="#hours">Hours</a><a href="#contact">Contact</a><a class="call" href="tel:{{PHONE}}">Call <span class="num">{{PHONE}}</span></a></nav>
 </header>
 
 <section class="hero">
@@ -48,7 +55,14 @@
     <p>Check-ups, cleaning, whitening and emergency care, with evening appointments six days a week. New patients welcome.</p>
     <a class="btn" href="#contact">Book an appointment</a><a class="btn ghost" href="#services">See services</a>
   </div>
-  <div class="pic" role="img" aria-label="Clinic interior"></div>
+  <div class="pic">
+    <div class="slotcard" aria-hidden="true">
+      <small>Next available</small>
+      <b>Tomorrow, 10:00 AM</b>
+      <span>Consultation · 30 min · ₹600</span>
+      <div class="chips"><i class="on">10:00 AM</i><i>11:30 AM</i><i>5:00 PM</i><i>6:30 PM</i></div>
+    </div>
+  </div>
 </section>
 
 <div class="strip"><span>Open until 8 pm Mon–Fri</span><span>5 min from Green Park metro</span><span>UPI and cards accepted</span><span>Same-day emergency slots</span></div>

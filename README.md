@@ -65,11 +65,27 @@ booking_lead_hours: 2
 
 ## Google Calendar
 
-1. In Google Cloud, create a project, enable the Google Calendar API, create a
-   **service account** and download its JSON key as `service-account.json`.
-2. Share the clinic's calendar with the service account's email (Make changes to events).
-3. In `.env`: `CALENDAR_BACKEND=google`, `GOOGLE_CALENDAR_ID=<calendar id>`,
-   `GOOGLE_SERVICE_ACCOUNT_FILE=service-account.json`.
+About 15 minutes, once per Google account. The service account is a robot user that
+the clinic shares its calendar with; it needs no password and no OAuth screen.
+
+1. Open https://console.cloud.google.com, click the project dropdown at the top →
+   **New project** → name it `frontdesk` → Create. Make sure it is selected.
+2. Menu → **APIs & Services → Library** → search "Google Calendar API" → Enable.
+3. Menu → **APIs & Services → Credentials** → Create credentials → **Service account**
+   → name `frontdesk` → Create and continue → Done (no roles needed).
+4. Click the new service account → **Keys** tab → Add key → Create new key → JSON.
+   A file downloads. Move it into this folder and rename it `service-account.json`.
+   Copy the service account's email (it ends in `.iam.gserviceaccount.com`).
+5. In https://calendar.google.com: next to "Other calendars" click **+ → Create new
+   calendar** → name it (e.g. `Bright Smile Dental`) → Create. Open its settings →
+   **Share with specific people** → Add the service account email with
+   **Make changes to events**. Further down, under **Integrate calendar**, copy the
+   **Calendar ID**.
+6. In `.env`: `CALENDAR_BACKEND=google`, `GOOGLE_CALENDAR_ID=<that id>`,
+   `GOOGLE_SERVICE_ACCOUNT_FILE=service-account.json`. Restart the app; `/healthz`
+   should say `"calendar": "google"`.
+
+`service-account.json` is in `.gitignore`. Never commit it.
 
 ## Tests
 
@@ -81,6 +97,11 @@ The tests run the whole booking flow against the fake calendar and a scripted mo
 so they need no API key.
 
 ## Embed on a website
+
+The widget calls the API from the clinic's own domain, so the server sends CORS
+headers for the origins in `ALLOWED_ORIGINS` (`*` by default; set it to the clinic's
+site in production). `/api/chat` is rate-limited per visitor (`RATE_LIMIT_PER_10MIN`,
+default 30) so a prank cannot run up the model bill.
 
 ```html
 <script src="https://YOUR-HOST/widget.js" data-frontdesk="https://YOUR-HOST"></script>
