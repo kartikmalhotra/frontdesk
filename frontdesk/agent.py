@@ -216,13 +216,19 @@ class Receptionist:
         messages.append({"role": "user", "content": user_text.strip()[:2000]})
         executor = ToolExecutor(self.business, self.calendar, self.store, conversation_id, self.now)
         system = build_system_prompt(self.business, self.now())
+        extra: dict[str, Any] = {}
         if "qwen3" in self.model.lower():  # Qwen3 thinks by default; the soft switch turns it off
             system += "\n/no_think"
+        if not self.model.lower().startswith("claude"):
+            # Local models (Ollama) ignore /no_think on the messages endpoint and spend ~20s thinking
+            # before every reply. Turning thinking off cuts a reply to a few seconds.
+            extra["extra_body"] = {"thinking": {"type": "disabled"}}
 
         final_text = ""
         for _ in range(MAX_TOOL_ROUNDS + 1):
             response = self.client.messages.create(
-                model=self.model, max_tokens=1000, system=system, tools=TOOLS, messages=self._trim(messages))
+                model=self.model, max_tokens=1000, system=system, tools=TOOLS, messages=self._trim(messages),
+                **extra)
             content = [p for p in (self._plain(b) for b in response.content) if p]
             if not content:  # a model that only "thought" and said nothing
                 content = [{"type": "text", "text": "Sorry, could you say that again?"}]
