@@ -19,7 +19,7 @@ NOW = datetime(2026, 10, 22, 21, 30, tzinfo=ZoneInfo("Asia/Kolkata"))
 
 @pytest.fixture
 def business():
-    return load_business(ROOT / "business.yaml")
+    return load_business(ROOT / "business.delhi.yaml")
 
 
 @pytest.fixture

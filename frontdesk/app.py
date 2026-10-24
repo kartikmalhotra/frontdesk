@@ -4,6 +4,7 @@ No `from __future__ import annotations` here on purpose: FastAPI and pydantic in
 annotations in this file at runtime, so they must be real types, not strings."""
 
 import html
+import logging
 import secrets
 import time
 from collections import defaultdict, deque
@@ -25,6 +26,7 @@ from .db import Store
 from .page import render_site
 
 STATIC = Path(__file__).parent / "static"
+log = logging.getLogger("frontdesk")
 
 
 class RateLimiter:
@@ -59,7 +61,9 @@ def create_app(business=None, calendar=None, store=None, client=None, settings: 
         if not settings.anthropic_api_key:
             raise SystemExit("ANTHROPIC_API_KEY is not set. Put it in .env (see .env.example) and start again.")
         import anthropic
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        # The SDK waits up to 10 minutes by default, which looks like a frozen chat. Fail fast instead.
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key, timeout=settings.model_timeout,
+                                     max_retries=1)
     receptionist = Receptionist(business, calendar, store, client, settings.model)
     limiter = RateLimiter(settings.rate_limit_per_10min)
 
@@ -97,10 +101,12 @@ def create_app(business=None, calendar=None, store=None, client=None, settings: 
                 f"You've sent quite a few messages. Please call {business.phone} and the team will help you directly."})
         try:
             text = receptionist.reply(cid, body.message)
+            app.state.last_error = None
         except Exception as e:  # model or network failure: fail safe, keep the lead path open
             text = (f"Sorry, I'm having trouble right now. Please call {business.phone} or leave your name "
                     f"and number here and the team will get back to you.")
             app.state.last_error = repr(e)
+            log.exception("chat reply failed (model %s)", settings.model)
         return {"conversation_id": cid, "reply": text}
 
     def admin_auth(credentials: HTTPBasicCredentials = Depends(security)) -> None:
@@ -130,6 +136,7 @@ def create_app(business=None, calendar=None, store=None, client=None, settings: 
 
     @app.get("/healthz")
     def healthz() -> dict:
-        return {"ok": True, "business": business.name, "calendar": settings.calendar_backend}
+        return {"ok": True, "business": business.name, "calendar": settings.calendar_backend,
+                "model": settings.model, "chat_failing": bool(getattr(app.state, "last_error", None))}
 
     return app

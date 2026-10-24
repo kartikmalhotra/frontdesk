@@ -1,48 +1,49 @@
 # Everything the agent may say about the business comes from this file.
-# Demo business; replace with the real one before a pilot.
+# Demo business for US pitches; replace with the real clinic before a pilot.
+# The Delhi version is in business.delhi.yaml (set BUSINESS_FILE to use it).
 name: Bright Smile Dental
-timezone: Asia/Kolkata
-phone: "+91 98765 43210"
+timezone: America/New_York
+phone: "(212) 555-0142"
 email: hello@brightsmile.example
-address: 14 Green Park, New Delhi. Five minutes' walk from Green Park metro.
+address: Upper East Side, New York, NY. Two blocks from the 77 St subway station (6 train).
 # Text for the hosted booking page (the page the chat lives on). Optional.
-tagline: Gentle, modern dentistry in Green Park.
+tagline: Gentle, modern dentistry on the Upper East Side.
 intro: Check-ups, cleaning, whitening and emergency care, with evening appointments six days a week. New patients welcome.
 highlights:
   - Open until 8 pm Mon–Fri
-  - 5 min from Green Park metro
-  - UPI and cards accepted
+  - 2 blocks from the 77 St subway
+  - Most PPO dental plans accepted
   - Same-day emergency slots
 hours:
-  mon: "10:00-20:00"
-  tue: "10:00-20:00"
-  wed: "10:00-20:00"
-  thu: "10:00-20:00"
-  fri: "10:00-20:00"
-  sat: "10:00-18:00"
+  mon: "09:00-20:00"
+  tue: "09:00-20:00"
+  wed: "09:00-20:00"
+  thu: "09:00-20:00"
+  fri: "09:00-20:00"
+  sat: "09:00-15:00"
   sun: closed
 services:
-  - name: Consultation
-    minutes: 30
-    price: "₹600"
-    notes: First visit with the dentist, includes a basic check-up.
+  - name: New patient exam
+    minutes: 60
+    price: "$150"
+    notes: Full exam and X-rays with the dentist.
   - name: Cleaning
     minutes: 45
-    price: "₹1,500"
-    notes: Scaling and polishing.
+    price: "$175"
+    notes: Professional cleaning and polish.
   - name: Whitening
     minutes: 60
-    price: "₹8,000"
-    notes: In-clinic whitening, one session.
+    price: "$450"
+    notes: In-office whitening, one session.
   - name: Emergency visit
     minutes: 30
-    price: "₹1,000"
-    notes: Same-day where possible. For severe pain or swelling, call the clinic directly.
+    price: "$250"
+    notes: Same-day where possible. For severe pain or swelling, call the office directly.
 policies:
   cancellation: Free cancellation or rescheduling up to 24 hours before the appointment.
-  payment: Cash, UPI and cards accepted at the clinic.
-  parking: Street parking on Green Park Road; the metro is closer.
-  insurance: We do not process insurance claims directly, but we provide itemised bills.
+  payment: Credit and debit cards, Apple Pay and HSA/FSA cards accepted.
+  insurance: We accept most PPO dental plans and will check your coverage before your visit.
+  parking: Street parking on Lexington Avenue; the subway is closer.
 slot_minutes: 30
 booking_lead_hours: 2
 max_days_ahead: 14
@@ -50,5 +51,5 @@ max_days_ahead: 14
 out_of_scope: >
   Do not give medical or clinical advice, diagnose, or recommend treatment.
   If someone describes severe pain, bleeding, swelling or an injury, tell them to call
-  the clinic phone number or go to an emergency department, then offer the earliest
+  the office phone number or go to an emergency room, then offer the earliest
   emergency slot.

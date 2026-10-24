@@ -130,6 +130,8 @@ def load_business(path: str | os.PathLike | None = None) -> Business:
 class Settings:
     anthropic_api_key: str = field(default_factory=lambda: os.environ.get("ANTHROPIC_API_KEY", ""))
     model: str = field(default_factory=lambda: os.environ.get("MODEL", "claude-sonnet-5-5"))
+    # Seconds to wait for one model call before giving up and showing the fallback reply.
+    model_timeout: float = field(default_factory=lambda: float(os.environ.get("MODEL_TIMEOUT", "20")))
     calendar_backend: str = field(default_factory=lambda: os.environ.get("CALENDAR_BACKEND", "fake"))
     google_calendar_id: str = field(default_factory=lambda: os.environ.get("GOOGLE_CALENDAR_ID", ""))
     google_service_account_file: str = field(

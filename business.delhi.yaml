@@ -1,0 +1,54 @@
+# Everything the agent may say about the business comes from this file.
+# Demo business; replace with the real one before a pilot.
+name: Bright Smile Dental
+timezone: Asia/Kolkata
+phone: "+91 98765 43210"
+email: hello@brightsmile.example
+address: 14 Green Park, New Delhi. Five minutes' walk from Green Park metro.
+# Text for the hosted booking page (the page the chat lives on). Optional.
+tagline: Gentle, modern dentistry in Green Park.
+intro: Check-ups, cleaning, whitening and emergency care, with evening appointments six days a week. New patients welcome.
+highlights:
+  - Open until 8 pm Mon–Fri
+  - 5 min from Green Park metro
+  - UPI and cards accepted
+  - Same-day emergency slots
+hours:
+  mon: "10:00-20:00"
+  tue: "10:00-20:00"
+  wed: "10:00-20:00"
+  thu: "10:00-20:00"
+  fri: "10:00-20:00"
+  sat: "10:00-18:00"
+  sun: closed
+services:
+  - name: Consultation
+    minutes: 30
+    price: "₹600"
+    notes: First visit with the dentist, includes a basic check-up.
+  - name: Cleaning
+    minutes: 45
+    price: "₹1,500"
+    notes: Scaling and polishing.
+  - name: Whitening
+    minutes: 60
+    price: "₹8,000"
+    notes: In-clinic whitening, one session.
+  - name: Emergency visit
+    minutes: 30
+    price: "₹1,000"
+    notes: Same-day where possible. For severe pain or swelling, call the clinic directly.
+policies:
+  cancellation: Free cancellation or rescheduling up to 24 hours before the appointment.
+  payment: Cash, UPI and cards accepted at the clinic.
+  parking: Street parking on Green Park Road; the metro is closer.
+  insurance: We do not process insurance claims directly, but we provide itemised bills.
+slot_minutes: 30
+booking_lead_hours: 2
+max_days_ahead: 14
+# What the agent must never do.
+out_of_scope: >
+  Do not give medical or clinical advice, diagnose, or recommend treatment.
+  If someone describes severe pain, bleeding, swelling or an injury, tell them to call
+  the clinic phone number or go to an emergency department, then offer the earliest
+  emergency slot.
