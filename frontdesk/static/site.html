@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{BUSINESS_NAME}}</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{--green:#0f6e56;--ink:#1b1f24;--muted:#5b6470;--line:#e6e8ec;--bg:#fbfbfa}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
+  header{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 6vw;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;text-decoration:none;color:var(--ink)}
+  .brand i{width:34px;height:34px;border-radius:9px;background:var(--green);display:inline-block}
+  nav a{color:var(--muted);text-decoration:none;margin-left:22px;font-size:15px}
+  nav .call{background:var(--green);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600}
+  .hero{display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center;padding:64px 6vw;background:var(--bg)}
+  .hero h1{font-size:44px;line-height:1.1;margin:0 0 16px;letter-spacing:-.01em}
+  .hero p{font-size:18px;color:var(--muted);margin:0 0 24px;max-width:34em}
+  .btn{display:inline-block;background:var(--green);color:#fff;padding:14px 22px;border-radius:12px;font-weight:600;text-decoration:none}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);margin-left:10px}
+  .pic{aspect-ratio:4/3;border-radius:20px;background:
+       radial-gradient(circle at 30% 30%,#d7efe6,transparent 55%),
+       radial-gradient(circle at 75% 70%,#bfe3d4,transparent 50%),#e9f4ef;position:relative;overflow:hidden}
+  .pic:after{content:"";position:absolute;inset:auto 10% 10% 10%;height:38%;background:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(15,110,86,.12)}
+  .strip{display:flex;gap:32px;flex-wrap:wrap;padding:20px 6vw;border-bottom:1px solid var(--line);color:var(--muted);font-size:14px}
+  section{padding:56px 6vw}
+  h2{font-size:28px;margin:0 0 20px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .card{border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card b{display:block;font-size:17px;margin-bottom:6px}.card span{color:var(--muted);font-size:14px}
+  .card em{display:block;margin-top:12px;font-style:normal;font-weight:700;color:var(--green)}
+  .hours{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  table{border-collapse:collapse;width:100%}td{padding:8px 0;border-bottom:1px solid var(--line)}td:last-child{text-align:right;color:var(--muted)}
+  footer{padding:32px 6vw;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:860px){.hero{grid-template-columns:1fr;padding:40px 6vw}.hero h1{font-size:34px}.grid{grid-template-columns:1fr 1fr}.hours{grid-template-columns:1fr}nav a:not(.call){display:none}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="#"><i></i>{{BUSINESS_NAME}}</a>
+  <nav><a href="#services">Services</a><a href="#hours">Hours</a><a href="#contact">Contact</a><a class="call" href="tel:{{PHONE}}">Call {{PHONE}}</a></nav>
+</header>
+
+<section class="hero">
+  <div>
+    <h1>Gentle, modern dentistry in Green Park.</h1>
+    <p>Check-ups, cleaning, whitening and emergency care, with evening appointments six days a week. New patients welcome.</p>
+    <a class="btn" href="#contact">Book an appointment</a><a class="btn ghost" href="#services">See services</a>
+  </div>
+  <div class="pic" role="img" aria-label="Clinic interior"></div>
+</section>
+
+<div class="strip"><span>Open until 8 pm Mon–Fri</span><span>5 min from Green Park metro</span><span>UPI and cards accepted</span><span>Same-day emergency slots</span></div>
+
+<section id="services">
+  <h2>Services</h2>
+  <div class="grid">
+    <div class="card"><b>Consultation</b><span>First visit with the dentist, includes a basic check-up.</span><em>₹600 · 30 min</em></div>
+    <div class="card"><b>Cleaning</b><span>Scaling and polishing.</span><em>₹1,500 · 45 min</em></div>
+    <div class="card"><b>Whitening</b><span>In-clinic whitening, one session.</span><em>₹8,000 · 60 min</em></div>
+    <div class="card"><b>Emergency visit</b><span>Same-day where possible.</span><em>₹1,000 · 30 min</em></div>
+  </div>
+</section>
+
+<section id="hours" style="background:var(--bg)">
+  <div class="hours">
+    <div><h2>Opening hours</h2>
+      <table><tr><td>Monday – Friday</td><td>10:00 – 20:00</td></tr><tr><td>Saturday</td><td>10:00 – 18:00</td></tr><tr><td>Sunday</td><td>Closed</td></tr></table></div>
+    <div id="contact"><h2>Find us</h2><p>{{ADDRESS}}</p><p>Phone: <a href="tel:{{PHONE}}">{{PHONE}}</a></p><p style="color:var(--muted)">Can't call right now? Use the chat in the corner, any time of day, to ask a question or book a slot.</p></div>
+  </div>
+</section>
+
+<footer>© {{BUSINESS_NAME}}. Demo website for the AIVETech Front Desk receptionist.</footer>
+
+<script src="/widget.js" data-frontdesk="" data-accent="#0f6e56"></script>
+</body>
+</html>
