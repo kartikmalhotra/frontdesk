@@ -1,6 +1,7 @@
-"""FastAPI app: chat API, demo site, embeddable widget and a small admin page."""
+"""FastAPI app: chat API, hosted booking page, embeddable widget and a small admin page.
 
-from __future__ import annotations
+No `from __future__ import annotations` here on purpose: FastAPI and pydantic inspect the
+annotations in this file at runtime, so they must be real types, not strings."""
 
 import html
 import secrets
@@ -8,6 +9,7 @@ import time
 from collections import defaultdict, deque
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,7 +45,12 @@ class RateLimiter:
         return True
 
 
-def create_app(business=None, calendar=None, store=None, client=None, settings: Settings | None = None) -> FastAPI:
+class ChatIn(BaseModel):
+    conversation_id: Optional[str] = None
+    message: str = Field(min_length=1, max_length=2000)
+
+
+def create_app(business=None, calendar=None, store=None, client=None, settings: Optional[Settings] = None) -> FastAPI:
     settings = settings or Settings()
     business = business or load_business()
     calendar = calendar or make_calendar(business, settings)
@@ -62,10 +69,6 @@ def create_app(business=None, calendar=None, store=None, client=None, settings: 
                        allow_headers=["Content-Type"])
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     security = HTTPBasic()
-
-    class ChatIn(BaseModel):
-        conversation_id: str | None = None
-        message: str = Field(min_length=1, max_length=2000)
 
     @app.get("/", response_class=HTMLResponse)
     def booking_page() -> str:
@@ -116,8 +119,8 @@ def create_app(business=None, calendar=None, store=None, client=None, settings: 
         def rows(items, cols):  # visitor-typed text ends up here, so it is escaped
             return "".join("<tr>" + "".join(f"<td>{html.escape(str(r.get(c) or ''))}</td>" for c in cols) + "</tr>"
                            for r in items)
-        html = (STATIC / "admin.html").read_text(encoding="utf-8")
-        return (html.replace("{{BUSINESS_NAME}}", business.name)
+        page = (STATIC / "admin.html").read_text(encoding="utf-8")
+        return (page.replace("{{BUSINESS_NAME}}", business.name)
                     .replace("{{BOOKING_ROWS}}", rows(bookings, ["start", "name", "phone", "service", "status", "created_at"]))
                     .replace("{{LEAD_ROWS}}", rows(leads, ["created_at", "name", "phone", "interest", "notes"])))
 
