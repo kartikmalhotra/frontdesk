@@ -78,9 +78,9 @@ PHONE_RE = re.compile(r"[+\d][\d\s\-()]{7,}\d")
 
 def build_system_prompt(business: Business, now: datetime) -> str:
     today = now.strftime("%A %d %B %Y, %H:%M")
+    # The date goes last: everything above it stays identical between calls, so local models (Ollama)
+    # and prompt caching can reuse the work instead of re-reading the whole prompt every minute.
     return f"""You are the online receptionist for {business.name}. You are chatting with a visitor on the business's website.
-
-Current date and time: {today} ({business.timezone}).
 
 Your job: answer questions about the business, capture the visitor's details, and book appointments.
 
@@ -93,10 +93,12 @@ Rules you must follow:
 6. As soon as you learn a name or phone number, call save_lead so the team has it even if the chat ends.
 7. If the visitor asks for something you can't do, call handoff_to_human and tell them the team will follow up.
 8. Keep replies short: two or three sentences, like a good receptionist. No bullet lists unless listing services or prices. No emoji. Be warm, not chatty.
-9. Dates: "today" is {now.strftime('%Y-%m-%d')}. Work out dates like "tomorrow" or "Friday" from that. The business is closed on days marked closed; say so and offer the next open day.
+9. Dates: work out dates like "tomorrow" or "Friday" from today's date, given at the end. The business is closed on days marked closed; say so and offer the next open day.
 
 Business details:
 {business.describe()}
+
+Current date and time: {today} ({business.timezone}). "Today" is {now.strftime('%Y-%m-%d')}.
 """
 
 
@@ -209,20 +211,30 @@ class Receptionist:
             start += 1
         return messages[start:] if start < len(messages) else messages[-1:]
 
-    def reply(self, conversation_id: str, user_text: str) -> str:
-        messages = self.store.get_messages(conversation_id)
-        if messages is None:
-            raise KeyError("unknown conversation")
-        messages.append({"role": "user", "content": user_text.strip()[:2000]})
-        executor = ToolExecutor(self.business, self.calendar, self.store, conversation_id, self.now)
+    def _model_options(self) -> tuple[str, dict[str, Any]]:
         system = build_system_prompt(self.business, self.now())
         extra: dict[str, Any] = {}
         if "qwen3" in self.model.lower():  # Qwen3 thinks by default; the soft switch turns it off
             system += "\n/no_think"
         if not self.model.lower().startswith("claude"):
             # Local models (Ollama) ignore /no_think on the messages endpoint and spend ~20s thinking
-            # before every reply. Turning thinking off cuts a reply to a few seconds.
+            # before every reply. Turning thinking off saves that time.
             extra["extra_body"] = {"thinking": {"type": "disabled"}}
+        return system, extra
+
+    def warm_up(self) -> None:
+        """Make a local model read the prompt once at startup, so the first visitor isn't kept waiting."""
+        system, extra = self._model_options()
+        self.client.messages.create(model=self.model, max_tokens=1, system=system, tools=TOOLS,
+                                    messages=[{"role": "user", "content": "hi"}], **extra)
+
+    def reply(self, conversation_id: str, user_text: str) -> str:
+        messages = self.store.get_messages(conversation_id)
+        if messages is None:
+            raise KeyError("unknown conversation")
+        messages.append({"role": "user", "content": user_text.strip()[:2000]})
+        executor = ToolExecutor(self.business, self.calendar, self.store, conversation_id, self.now)
+        system, extra = self._model_options()
 
         final_text = ""
         for _ in range(MAX_TOOL_ROUNDS + 1):

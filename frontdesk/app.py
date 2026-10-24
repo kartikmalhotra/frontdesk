@@ -6,6 +6,7 @@ annotations in this file at runtime, so they must be real types, not strings."""
 import html
 import logging
 import secrets
+import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime
@@ -62,10 +63,21 @@ def create_app(business=None, calendar=None, store=None, client=None, settings: 
             raise SystemExit("ANTHROPIC_API_KEY is not set. Put it in .env (see .env.example) and start again.")
         import anthropic
         # The SDK waits up to 10 minutes by default, which looks like a frozen chat. Fail fast instead.
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key, timeout=settings.model_timeout,
-                                     max_retries=1)
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key,
+                                     timeout=settings.effective_model_timeout, max_retries=1)
+        warm = settings.is_local_model
+    else:
+        warm = False
     receptionist = Receptionist(business, calendar, store, client, settings.model)
     limiter = RateLimiter(settings.rate_limit_per_10min)
+    if warm:
+        def _warm() -> None:
+            try:
+                receptionist.warm_up()
+                log.warning("local model %s is ready", settings.model)
+            except Exception:
+                log.exception("could not warm up local model %s", settings.model)
+        threading.Thread(target=_warm, daemon=True).start()
 
     app = FastAPI(title=f"{business.name} front desk", docs_url=None, redoc_url=None)
     # The widget runs on the clinic's own domain, so the browser needs these headers to call us.

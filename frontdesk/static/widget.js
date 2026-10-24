@@ -6,7 +6,7 @@
   var base = (me && me.getAttribute("data-frontdesk")) || "";
   var accent = (me && me.getAttribute("data-accent")) || "#0f6e56";
   var cid = null, open = false, busy = false, ready = false, name = "Front desk";
-  var TIMEOUT_MS = 60000;  // longer than one model call (MODEL_TIMEOUT), so the server answers first
+  var TIMEOUT_MS = 120000;  // longer than a slow local-model reply, so the server answers first
   var SORRY = "Sorry, something went wrong. Please try again or call us.";
 
   var css = "\

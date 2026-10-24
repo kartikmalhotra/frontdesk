@@ -130,8 +130,18 @@ def load_business(path: str | os.PathLike | None = None) -> Business:
 class Settings:
     anthropic_api_key: str = field(default_factory=lambda: os.environ.get("ANTHROPIC_API_KEY", ""))
     model: str = field(default_factory=lambda: os.environ.get("MODEL", "claude-sonnet-5-5"))
-    # Seconds to wait for one model call before giving up and showing the fallback reply.
-    model_timeout: float = field(default_factory=lambda: float(os.environ.get("MODEL_TIMEOUT", "20")))
+    # Seconds to wait for one model call before showing the fallback reply. Unset: 20 for Claude,
+    # 90 for local models, which read a long prompt slowly.
+    model_timeout: float | None = field(
+        default_factory=lambda: float(os.environ["MODEL_TIMEOUT"]) if os.environ.get("MODEL_TIMEOUT") else None)
+
+    @property
+    def is_local_model(self) -> bool:
+        return not self.model.lower().startswith("claude")
+
+    @property
+    def effective_model_timeout(self) -> float:
+        return self.model_timeout or (90.0 if self.is_local_model else 20.0)
     calendar_backend: str = field(default_factory=lambda: os.environ.get("CALENDAR_BACKEND", "fake"))
     google_calendar_id: str = field(default_factory=lambda: os.environ.get("GOOGLE_CALENDAR_ID", ""))
     google_service_account_file: str = field(
