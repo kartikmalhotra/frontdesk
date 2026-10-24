@@ -5,6 +5,14 @@ timezone: Asia/Kolkata
 phone: "+91 98765 43210"
 email: hello@brightsmile.example
 address: 14 Green Park, New Delhi. Five minutes' walk from Green Park metro.
+# Text for the hosted booking page (the page the chat lives on). Optional.
+tagline: Gentle, modern dentistry in Green Park.
+intro: Check-ups, cleaning, whitening and emergency care, with evening appointments six days a week. New patients welcome.
+highlights:
+  - Open until 8 pm Mon–Fri
+  - 5 min from Green Park metro
+  - UPI and cards accepted
+  - Same-day emergency slots
 hours:
   mon: "10:00-20:00"
   tue: "10:00-20:00"

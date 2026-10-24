@@ -11,6 +11,9 @@ API with tool calling, Google Calendar API.
 
 ## What it does
 
+- A hosted booking page (`/`) generated from `business.yaml`, with live "next available" slots,
+  for businesses that have no website: they link to it from Google Maps, Instagram and WhatsApp.
+
 - Answers hours, services, prices, location, parking, cancellation policy — only from
   `business.yaml`, never invented.
 - Offers real slots from Google Calendar (or a built-in fake calendar for demos).

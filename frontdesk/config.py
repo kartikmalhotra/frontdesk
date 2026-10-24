@@ -37,6 +37,10 @@ class Business:
     max_days_ahead: int = 14
     email: str = ""
     out_of_scope: str = ""
+    # Shown on the hosted booking page only; the agent does not use these.
+    tagline: str = ""
+    intro: str = ""
+    highlights: list[str] = field(default_factory=list)
 
     @property
     def tz(self) -> ZoneInfo:
@@ -116,6 +120,9 @@ def load_business(path: str | os.PathLike | None = None) -> Business:
         max_days_ahead=int(data.get("max_days_ahead", 14)),
         email=str(data.get("email", "")),
         out_of_scope=str(data.get("out_of_scope", "")),
+        tagline=str(data.get("tagline", "")),
+        intro=str(data.get("intro", "")),
+        highlights=[str(h) for h in (data.get("highlights") or [])],
     )
 
 

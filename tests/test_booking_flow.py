@@ -125,6 +125,22 @@ def test_model_blocks_are_reduced_to_api_fields():
         {"type": "tool_use", "id": "t1", "name": "save_lead", "input": {"name": "A"}}
 
 
+def test_booking_page_renders_from_business_file(business, calendar):
+    from pathlib import Path
+    from frontdesk.page import hours_rows, next_slots, render_site
+    assert hours_rows(business) == ("<tr><td>Monday – Friday</td><td>10:00 – 20:00</td></tr>"
+                                    "<tr><td>Saturday</td><td>10:00 – 18:00</td></tr>"
+                                    "<tr><td>Sunday</td><td>Closed</td></tr>")
+    label, times = next_slots(business, calendar, now=NOW)       # 21:30 Thursday → nothing left today
+    assert label == "Tomorrow, 10:00 AM" and times == ["10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM"]
+    template = (Path(__file__).resolve().parents[1] / "frontdesk/static/site.html").read_text()
+    page = render_site(template, business, calendar, now=NOW)
+    assert "{{" not in page
+    assert "Gentle, modern dentistry" in page and "Tomorrow, 10:00 AM" in page
+    assert page.count('<div class="card">') == 4 and "₹8,000 · 60 min" in page
+    assert "5 min from Green Park metro" in page and "Bright Smile Dental" in page
+
+
 def test_tool_loop_is_bounded(business, calendar, store):
     tomorrow = (NOW + timedelta(days=1)).date().isoformat()
     script = [[tool("get_available_slots", f"t{i}", date=tomorrow)] for i in range(10)]

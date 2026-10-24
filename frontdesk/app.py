@@ -20,6 +20,7 @@ from .agent import Receptionist
 from .calendar import make_calendar
 from .config import Settings, load_business
 from .db import Store
+from .page import render_site
 
 STATIC = Path(__file__).parent / "static"
 
@@ -67,10 +68,10 @@ def create_app(business=None, calendar=None, store=None, client=None, settings: 
         message: str = Field(min_length=1, max_length=2000)
 
     @app.get("/", response_class=HTMLResponse)
-    def demo_site() -> str:
-        html = (STATIC / "site.html").read_text(encoding="utf-8")
-        return html.replace("{{BUSINESS_NAME}}", business.name).replace("{{PHONE}}", business.phone) \
-                   .replace("{{ADDRESS}}", business.address)
+    def booking_page() -> str:
+        """The hosted page: a small site for the business, generated from business.yaml, with the chat on it.
+        Clinics with no website link to this from their Google listing and Instagram."""
+        return render_site((STATIC / "site.html").read_text(encoding="utf-8"), business, calendar)
 
     @app.get("/widget.js")
     def widget_js() -> FileResponse:

@@ -51,42 +51,31 @@
 
 <section class="hero">
   <div>
-    <h1>Gentle, modern dentistry in Green Park.</h1>
-    <p>Check-ups, cleaning, whitening and emergency care, with evening appointments six days a week. New patients welcome.</p>
-    <a class="btn" href="#contact">Book an appointment</a><a class="btn ghost" href="#services">See services</a>
+    <h1>{{TAGLINE}}</h1>
+    <p>{{INTRO}}</p>
+    <a class="btn" href="#" id="book">Book an appointment</a><a class="btn ghost" href="#services">See services</a>
   </div>
-  <div class="pic">
-    <div class="slotcard" aria-hidden="true">
-      <small>Next available</small>
-      <b>Tomorrow, 10:00 AM</b>
-      <span>Consultation · 30 min · ₹600</span>
-      <div class="chips"><i class="on">10:00 AM</i><i>11:30 AM</i><i>5:00 PM</i><i>6:30 PM</i></div>
-    </div>
-  </div>
+  <div class="pic">{{SLOTCARD}}</div>
 </section>
 
-<div class="strip"><span>Open until 8 pm Mon–Fri</span><span>5 min from Green Park metro</span><span>UPI and cards accepted</span><span>Same-day emergency slots</span></div>
+<div class="strip">{{HIGHLIGHTS}}</div>
 
 <section id="services">
   <h2>Services</h2>
-  <div class="grid">
-    <div class="card"><b>Consultation</b><span>First visit with the dentist, includes a basic check-up.</span><em>₹600 · 30 min</em></div>
-    <div class="card"><b>Cleaning</b><span>Scaling and polishing.</span><em>₹1,500 · 45 min</em></div>
-    <div class="card"><b>Whitening</b><span>In-clinic whitening, one session.</span><em>₹8,000 · 60 min</em></div>
-    <div class="card"><b>Emergency visit</b><span>Same-day where possible.</span><em>₹1,000 · 30 min</em></div>
-  </div>
+  <div class="grid">{{SERVICES}}</div>
 </section>
 
 <section id="hours" style="background:var(--bg)">
   <div class="hours">
     <div><h2>Opening hours</h2>
-      <table><tr><td>Monday – Friday</td><td>10:00 – 20:00</td></tr><tr><td>Saturday</td><td>10:00 – 18:00</td></tr><tr><td>Sunday</td><td>Closed</td></tr></table></div>
+      <table>{{HOURS_ROWS}}</table></div>
     <div id="contact"><h2>Find us</h2><p>{{ADDRESS}}</p><p>Phone: <a href="tel:{{PHONE}}">{{PHONE}}</a></p><p style="color:var(--muted)">Can't call right now? Use the chat in the corner, any time of day, to ask a question or book a slot.</p></div>
   </div>
 </section>
 
-<footer>© {{BUSINESS_NAME}}. Demo website for the AIVETech Front Desk receptionist.</footer>
+<footer>© {{BUSINESS_NAME}} · Online booking by AIVETech Front Desk</footer>
 
 <script src="/widget.js" data-frontdesk="" data-accent="#0f6e56"></script>
+<script>document.getElementById("book").addEventListener("click",function(e){e.preventDefault();var b=document.querySelector(".fd-launch");if(b&&!document.querySelector(".fd-panel.open"))b.click();});</script>
 </body>
 </html>
