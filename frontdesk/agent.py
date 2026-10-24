@@ -25,10 +25,14 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "get_available_slots",
         "description": "List open appointment start times for a given date. Call this before offering any time. "
-                       "Dates are YYYY-MM-DD in the business's timezone.",
+                       "Dates are YYYY-MM-DD in the business's timezone. Pass the service when you know it: "
+                       "services are longer than one slot, so only some start times can take them.",
         "input_schema": {
             "type": "object",
-            "properties": {"date": {"type": "string", "description": "YYYY-MM-DD"}},
+            "properties": {
+                "date": {"type": "string", "description": "YYYY-MM-DD"},
+                "service": {"type": "string", "description": "One of the business's service names, if known"},
+            },
             "required": ["date"],
         },
     },
@@ -87,7 +91,7 @@ Your job: answer questions about the business, capture the visitor's details, an
 Rules you must follow:
 1. Only state facts that appear in the business details below. If something is not there (for example a service, a price, a doctor's name, an insurance scheme), say you don't have that information and offer to have the team call them back.
 2. Never give medical, clinical or health advice. {business.out_of_scope}
-3. Before offering any appointment time, call get_available_slots for the date. Offer at most three or four options, in plain language ("tomorrow at 6:30 pm"). Never invent a time.
+3. Before offering any appointment time, call get_available_slots for the date, passing the service if you know it so the times returned are long enough for it. Offer at most three or four options, in plain language ("tomorrow at 6:30 pm"). Never invent a time.
 4. To book you need the visitor's name, phone number, the service, and their clear yes to one specific time. Ask for what is missing, one thing at a time. Then call book_appointment.
 5. After booking, confirm in one short message: service, day, time, and that they'll get a confirmation. Mention the cancellation policy in one line.
 6. As soon as you learn a name or phone number, call save_lead so the team has it even if the chat ends.
@@ -127,7 +131,7 @@ class ToolExecutor:
         except ValueError as e:
             return {"error": str(e)}
 
-    def tool_get_available_slots(self, date: str) -> dict[str, Any]:
+    def tool_get_available_slots(self, date: str, service: str | None = None) -> dict[str, Any]:
         today = self.now().date()
         day = _resolve_date(date, today)
         if day is None:
@@ -139,10 +143,14 @@ class ToolExecutor:
         if not self.business.open_hours(DAY_KEYS[day.weekday()]):
             return {"date": day.isoformat(), "open": False, "slots": [],
                     "note": f"{self.business.name} is closed on {day.strftime('%A')}s"}
-        slots = self.calendar.free_slots(day)
-        return {"date": day.isoformat(), "open": True, "weekday": day.strftime("%A"),
-                "slots": [s.isoformat() for s in slots],
-                "slots_readable": [s.strftime("%I:%M %p").lstrip("0") for s in slots]}
+        svc = self.business.service(service) if service else None
+        slots = self.calendar.free_slots(day, svc.minutes if svc else None)
+        out: dict[str, Any] = {"date": day.isoformat(), "open": True, "weekday": day.strftime("%A"),
+                               "slots": [s.isoformat() for s in slots],
+                               "slots_readable": [s.strftime("%I:%M %p").lstrip("0") for s in slots]}
+        if svc:  # these start times fit this service, not necessarily a longer one
+            out["service"], out["minutes"] = svc.name, svc.minutes
+        return out
 
     def tool_save_lead(self, interest: str, name: str | None = None, phone: str | None = None) -> dict[str, Any]:
         lead_id = self.store.save_lead(self.cid, name, phone, interest)
@@ -163,8 +171,14 @@ class ToolExecutor:
         if start_dt.tzinfo is None:
             start_dt = start_dt.replace(tzinfo=self.business.tz)
         start_dt = start_dt.astimezone(self.business.tz)
-        if start_dt not in self.calendar.free_slots(start_dt.date()):
-            return {"error": "that time is not available any more; call get_available_slots again"}
+        # Ask about the whole appointment, not one slot: a 45-minute cleaning on a 30-minute grid
+        # needs the slot after it too, and must still finish before closing time.
+        free = self.calendar.free_slots(start_dt.date(), svc.minutes)
+        if start_dt not in free:
+            return {"error": f"that time is not available any more for a {svc.minutes}-minute {svc.name}; offer one of these instead",
+                    "service": svc.name, "minutes": svc.minutes,
+                    "slots": [s.isoformat() for s in free],
+                    "slots_readable": [s.strftime("%I:%M %p").lstrip("0") for s in free]}
         title = f"{svc.name}: {name.strip()}"
         description = f"Booked by the website receptionist.\nPhone: {phone.strip()}\nService: {svc.name} ({svc.price})"
         event_id = self.calendar.book(start_dt, svc.minutes, title, description)

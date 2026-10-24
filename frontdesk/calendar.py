@@ -1,7 +1,7 @@
 """Calendar backends: a fake one for demos and tests, and Google Calendar for real use.
 
 Both expose the same three operations the agent needs:
-  free_slots(day) -> list of ISO start times that are open
+  free_slots(day, minutes) -> start times with room for an appointment of that length
   is_free(start, minutes) -> bool
   book(start, minutes, title, description) -> event id
 """
@@ -15,7 +15,7 @@ from .config import Business, DAY_KEYS
 
 
 class Calendar(Protocol):
-    def free_slots(self, day: date) -> list[datetime]: ...
+    def free_slots(self, day: date, minutes: int | None = None) -> list[datetime]: ...
     def is_free(self, start: datetime, minutes: int) -> bool: ...
     def book(self, start: datetime, minutes: int, title: str, description: str) -> str: ...
 
@@ -39,6 +39,18 @@ def _day_slots(business: Business, day: date) -> list[datetime]:
 
 def _earliest_allowed(business: Business, now: datetime) -> datetime:
     return now + timedelta(hours=business.booking_lead_hours)
+
+
+def _fits_in_hours(business: Business, start: datetime, minutes: int) -> bool:
+    """An appointment must finish before the business closes that day.
+
+    Slots are on a fixed grid (slot_minutes), but services can be longer than one slot, so the
+    last slot of the day is not offerable for every service."""
+    hours = business.open_hours(DAY_KEYS[start.date().weekday()])
+    if not hours:
+        return False
+    close = datetime.combine(start.date(), time.fromisoformat(hours[1]), business.tz)
+    return start + timedelta(minutes=minutes) <= close
 
 
 class FakeCalendar:
@@ -76,13 +88,16 @@ class FakeCalendar:
                 return False
         return True
 
-    def free_slots(self, day: date) -> list[datetime]:
+    def free_slots(self, day: date, minutes: int | None = None) -> list[datetime]:
+        """Slot starts that can take an appointment of `minutes` (default: one slot)."""
+        minutes = minutes or self.business.slot_minutes
         earliest = _earliest_allowed(self.business, self.now())
         latest_day = self.now().date() + timedelta(days=self.business.max_days_ahead)
         if day > latest_day:
             return []
         return [s for s in _day_slots(self.business, day)
-                if s >= earliest and self.is_free(s, self.business.slot_minutes)]
+                if s >= earliest and _fits_in_hours(self.business, s, minutes)
+                and self.is_free(s, minutes)]
 
     def book(self, start: datetime, minutes: int, title: str, description: str) -> str:
         if not self.is_free(start, minutes):
@@ -126,7 +141,9 @@ class GoogleCalendar:
                 return False
         return True
 
-    def free_slots(self, day: date) -> list[datetime]:
+    def free_slots(self, day: date, minutes: int | None = None) -> list[datetime]:
+        """Slot starts that can take an appointment of `minutes` (default: one slot)."""
+        minutes = minutes or self.business.slot_minutes
         slots = _day_slots(self.business, day)
         if not slots:
             return []
@@ -134,12 +151,12 @@ class GoogleCalendar:
         latest_day = self.now().date() + timedelta(days=self.business.max_days_ahead)
         if day > latest_day:
             return []
-        busy = self._busy(slots[0], slots[-1] + timedelta(minutes=self.business.slot_minutes))
+        busy = self._busy(slots[0], slots[-1] + timedelta(minutes=max(minutes, self.business.slot_minutes)))
         out = []
         for s in slots:
-            if s < earliest:
+            if s < earliest or not _fits_in_hours(self.business, s, minutes):
                 continue
-            e = s + timedelta(minutes=self.business.slot_minutes)
+            e = s + timedelta(minutes=minutes)
             if all(not (s < b_end and b_start < e) for b_start, b_end in busy):
                 out.append(s)
         return out

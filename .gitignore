@@ -5,3 +5,4 @@ __pycache__/
 *.db
 service-account.json
 .pytest_cache/
+server.log

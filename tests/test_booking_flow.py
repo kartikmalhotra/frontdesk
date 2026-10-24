@@ -59,6 +59,50 @@ def test_booking_requires_name_phone_known_service_and_free_slot(business, calen
     assert any(l["notes"] == "booked #1" for l in store.list_leads())
 
 
+def test_slots_offered_must_fit_the_whole_service(business, calendar, store):
+    """A 45-minute cleaning on a 30-minute grid needs two slots, and must end before closing.
+
+    Regression: 9:00 was offered for a cleaning with 9:30 already booked, and book_appointment
+    then failed with "slot no longer free" after the visitor had given their details."""
+    cid, ex = executor(business, calendar, store)
+    tomorrow = (NOW + timedelta(days=1)).date()           # Friday, open 10:00-20:00
+    grid = calendar.free_slots(tomorrow)
+    busy = grid[1]                                        # 10:30; blocks a 45-min booking at 10:00
+    calendar.events.append({"start": busy, "minutes": business.slot_minutes, "title": "Existing appointment"})
+
+    # book_appointment must judge the whole 45 minutes itself, whatever was asked of the calendar:
+    # 10:00 is on the free 30-minute grid, but a cleaning there would run into the 10:30 appointment.
+    assert grid[0] in calendar.free_slots(tomorrow)
+    refused = ex.run("book_appointment", {"name": "Asha Verma", "phone": "+91 98765 43210",
+                                          "service": "Cleaning", "start": grid[0].isoformat()})
+    assert "not available" in refused["error"], refused
+    assert refused["slots_readable"] and grid[0].isoformat() not in refused["slots"]
+
+    # The invariant: every time the agent offers for a service can actually be booked for it.
+    cleaning = ex.run("get_available_slots", {"date": tomorrow.isoformat(), "service": "Cleaning"})
+    for start in cleaning["slots"]:
+        out = ex.run("book_appointment", {"name": "Asha Verma", "phone": "+91 98765 43210",
+                                          "service": "Cleaning", "start": start})
+        assert out.get("booked"), f"offered {start} for a cleaning but could not book it: {out}"
+        assert out["minutes"] == 45
+        break
+
+    consult = ex.run("get_available_slots", {"date": tomorrow.isoformat(), "service": "Consultation"})
+    assert consult["minutes"] == 30 and cleaning["minutes"] == 45
+    # 10:00 fits a 30-minute consultation but not a 45-minute cleaning.
+    assert grid[0].isoformat() in consult["slots"]
+    assert grid[0].isoformat() not in cleaning["slots"]
+    assert busy.isoformat() not in consult["slots"] and busy.isoformat() not in cleaning["slots"]
+
+    # A 60-minute whitening cannot start in the last half hour before the 20:00 close.
+    whitening = ex.run("get_available_slots", {"date": tomorrow.isoformat(), "service": "Whitening"})
+    assert whitening["slots_readable"][-1] == "7:00 PM"
+    assert grid[-1].isoformat() in consult["slots"]        # 7:30 PM is still fine for 30 minutes
+    refused = ex.run("book_appointment", {"name": "Asha Verma", "phone": "+91 98765 43210",
+                                          "service": "Whitening", "start": grid[-1].isoformat()})
+    assert "not available" in refused["error"] and refused["slots_readable"]
+
+
 def test_handoff_records_a_lead_for_staff(business, calendar, store):
     cid, ex = executor(business, calendar, store)
     out = ex.run("handoff_to_human", {"reason": "asks about a root canal cost not listed", "phone": "+91 90000 00000"})
